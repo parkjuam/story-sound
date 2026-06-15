@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>효과음 보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FBF6EC;
+    --text: #3D3528;
+    --accent-story: #5B4B8A;
+    --accent-class: #2E8E8E;
+    --accent-script: #C77B5A;
+    --tab-bg: #EFE7D8;
+    --shadow: rgba(61,53,40,0.16);
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body{ margin:0; padding:0; height:100%; }
+  body{
+    font-family: 'Gowun Dodum', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .app{ display:flex; flex-direction:column; height:100vh; height:100dvh; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 20px 4px;
+  }
+  header h1{
+    font-family:'Jua', sans-serif;
+    font-size: 1.5rem;
+    margin:0;
+    letter-spacing: 0.5px;
+  }
+  .header-right{ display:flex; align-items:center; gap:14px; }
+  .volume{ display:flex; align-items:center; gap:8px; font-size:1.3rem; }
+  .volume input[type=range]{
+    width: 100px; accent-color: var(--accent-story);
+  }
+  .icon-btn{
+    border:none; background: var(--tab-bg); color: var(--text);
+    width:42px; height:42px; border-radius: 14px; font-size:1.3rem;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+
+  .tabs{ display:flex; gap:10px; padding: 8px 20px 12px; }
+  .tab-btn{
+    flex:1;
+    font-family:'Jua', sans-serif;
+    font-size: 1.15rem;
+    padding: 13px 10px;
+    border:none;
+    border-radius: 18px;
+    background: var(--tab-bg);
+    color: var(--text);
+    cursor:pointer;
+    box-shadow: 0 3px 0 var(--shadow);
+    transition: transform 0.1s ease;
+  }
+  .tab-btn:active{ transform: translateY(2px); }
+  .tab-btn.active[data-page="story"]{ background: var(--accent-story); color:#fff; }
+  .tab-btn.active[data-page="class"]{ background: var(--accent-class); color:#fff; }
+  .tab-btn.active[data-page="script"]{ background: var(--accent-script); color:#fff; }
+
+  main{ flex:1; overflow-y: auto; padding: 4px 20px 16px; -webkit-overflow-scrolling: touch; }
+  .page{ display:none; }
+  .page.active{ display:block; }
+  .page-title{
+    font-family:'Jua', sans-serif;
+    font-size: 1rem;
+    color: var(--accent-story);
+    margin: 6px 2px 12px;
+    opacity: 0.75;
+  }
+  .page#class .page-title{ color: var(--accent-class); }
+  .page#script .page-title{ color: var(--accent-script); }
+
+  .story-text{
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 1.18rem;
+    line-height: 2.3;
+    max-width: 760px;
+  }
+  .story-text p{ margin: 0 0 16px; }
+  .story-text .scene-divider{
+    font-family:'Jua', sans-serif;
+    color: var(--accent-script);
+    font-size: 1rem;
+    margin: 22px 0 8px;
+    opacity: 0.8;
+  }
+  .inline-sfx{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'Jua', sans-serif;
+    font-size: 0.95rem;
+    padding: 6px 16px;
+    margin: 0 4px;
+    border:none;
+    border-radius: 999px;
+    background: var(--btn-color);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+    cursor:pointer;
+    vertical-align: middle;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+  }
+  .inline-sfx.pressed{
+    transform: scale(0.94) translateY(2px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+    filter: brightness(1.07);
+  }
+  .line-rabbit{ color:#E2574C; font-weight:600; }
+  .line-turtle{ color:#3B6EA5; font-weight:600; }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+    gap: 14px;
+    padding-bottom: 8px;
+  }
+  .sound-btn{
+    aspect-ratio: 1 / 0.85;
+    border:none;
+    border-radius: 24px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 8px;
+    background: var(--btn-color);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.08);
+    cursor:pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+  }
+  .sound-btn .emoji{ font-size: 2.7rem; line-height:1; }
+  .sound-btn .label{ font-family:'Jua', sans-serif; font-size: 1.08rem; }
+  .sound-btn.pressed{
+    transform: scale(0.92) translateY(3px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+    filter: brightness(1.07);
+  }
+
+  footer.wave-bar{
+    height: 66px;
+    background: #ffffff;
+    border-top: 2px solid var(--tab-bg);
+    display:flex; align-items:center; gap: 14px;
+    padding: 0 20px;
+    flex-shrink:0;
+  }
+  #waveCanvas{ flex:1; height: 40px; width:100%; display:block; }
+  .wave-label{
+    font-family:'Jua', sans-serif; font-size: 1rem;
+    color: var(--text); white-space:nowrap; min-width: 96px; text-align:right;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>🎵 효과음 보드</h1>
+    <div class="header-right">
+      <div class="volume">
+        <span>🔈</span>
+        <input id="volumeSlider" type="range" min="0" max="100" value="80">
+      </div>
+      <button class="icon-btn" id="fsBtn" title="전체화면">⛶</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-page="script">🐢 토끼와 거북</button>
+    <button class="tab-btn" data-page="class">🏫 수업시간</button>
+  </nav>
+
+  <main>
+    <section id="script" class="page active">
+      <div class="page-title">낭독하면서 () 자리의 효과음 버튼을 눌러보세요</div>
+      <div class="story-text">
+        <p>어느 숲속에 동물 친구들이 모여 이야기를 나누고 있었어요.
+          <button class="inline-sfx" style="--btn-color:#FFD9A0" data-sfx="sfxUngsung" data-label="웅성웅성">💬 웅성웅성</button>
+        </p>
+        <p><span class="line-rabbit">"거북아! 넌 너무 느려! 내가 너랑 경주하면 100번은 이길 거야!"</span></p>
+        <p><span class="line-turtle">"그래? 그럼 우리 경주 해 볼까?"</span></p>
+        <p>"와! 너무 재밌겠다! 누가 이길까?"
+          <button class="inline-sfx" style="--btn-color:#D4C5F9" data-sfx="sfxClap" data-label="짝짝짝">👏 짝짝짝</button>
+        </p>
+
+        <div class="scene-divider">— 경주 시작 —</div>
+        <p>"준비~ 출발!"
+          <button class="inline-sfx" style="--btn-color:#A8D8EA" data-sfx="sfxChong" data-label="출발신호">🏁 출발신호</button>
+        </p>
+        <p>토끼와 거북은 동물 친구들의 신호로 달리기를 시작했어요. 토끼는 빠르게 달려가기 시작했고, 거북은 천천히 출발했어요.
+          <button class="inline-sfx" style="--btn-color:#C9E4A8" data-sfx="sfxFootsteps" data-label="발소리">👣 발소리</button>
+        </p>
+        <p><span class="line-rabbit">"하하하하! 역시 예상대로야! 거북은 한참 뒤에 있겠지?"</span>
+          <button class="inline-sfx" style="--btn-color:#FFB6B9" data-sfx="sfxLaugh" data-label="웃음">😂 웃음</button>
+        </p>
+        <p><span class="line-turtle">"포기하지 않고 끝까지 가자!"</span>
+          <button class="inline-sfx" style="--btn-color:#FFE699" data-sfx="sfxBijang" data-label="두근두근">💓 두근두근</button>
+        </p>
+
+        <div class="scene-divider">— 토끼의 낮잠 —</div>
+        <p>빠르게 달려가던 토끼는 나무 아래에 멈춰섰어요.</p>
+        <p><span class="line-rabbit">"휴~ 거북이 오려면 한참 걸리겠지? 난 좀 쉬어야겠다."</span></p>
+        <p>토끼는 하품을 하더니 나무 아래서 잠들었고, 거북은 꾸준히 앞으로 나아갔어요.
+          <button class="inline-sfx" style="--btn-color:#F7B7A3" data-sfx="sfxCogol" data-label="코골이">😪 코골이</button>
+        </p>
+        <p><span class="line-turtle">"영차 영차, 나는 포기하지 않아!"</span>
+          <button class="inline-sfx" style="--btn-color:#B8E0D2" data-sfx="sfxEffort" data-label="영차">💪 영차</button>
+        </p>
+
+        <div class="scene-divider">— 결승선 —</div>
+        <p>차근차근 꾸준히 나아가던 거북은 어느새 결승선에 가까워졌어요.
+          <button class="inline-sfx" style="--btn-color:#FFD9A0" data-sfx="sfxFootsteps" data-label="발소리">👣 발소리</button>
+        </p>
+        <p>"우와! 거북이 거의 다 왔어!"
+          <button class="inline-sfx" style="--btn-color:#D4C5F9" data-sfx="sfxHwan" data-label="환호">📣 환호</button>
+        </p>
+        <p>토끼는 환호 소리에 깜짝 놀라 깼어요.
+          <button class="inline-sfx" style="--btn-color:#A8D8EA" data-sfx="sfxSurprise" data-label="깜짝">😲 깜짝</button>
+        </p>
+        <p><span class="line-rabbit">"뭐?! 거북이 벌써? 안 돼!!!"</span></p>
+        <p><span class="line-turtle">"이겼다!"</span>
+          <button class="inline-sfx" style="--btn-color:#C9E4A8" data-sfx="sfxFang" data-label="팡파레">🎉 팡파레</button>
+        </p>
+        <p>"우와! 거북이 이겼어! 대단해!"
+          <button class="inline-sfx" style="--btn-color:#FFB6B9" data-sfx="sfxClap" data-label="짝짝짝">👏 짝짝짝</button>
+        </p>
+        <p><span class="line-rabbit">"내가 너무 방심했어. 미안해, 거북아."</span></p>
+        <p><span class="line-turtle">"괜찮아, 토끼야! 중요한 건 포기하지 않는 거야."</span></p>
+      </div>
+    </section>
+
+    <section id="class" class="page">
+      <div class="page-title">수업 진행에 필요한 신호음을 눌러보세요</div>
+      <div class="grid" id="classGrid"></div>
+    </section>
+  </main>
+
+  <footer class="wave-bar">
+    <canvas id="waveCanvas"></canvas>
+    <span class="wave-label" id="waveLabel">소리를 눌러보세요</span>
+  </footer>
+
+</div>
+
+<!-- 업로드한 음원 파일: HTML 파일과 같은 폴더에 아래 이름으로 저장하세요 -->
+<audio id="audioBike" preload="auto">
+  <source src="bicycle.mp3" type="audio/mpeg">
+  <source src="bicycle.wav" type="audio/wav">
+</audio>
+<audio id="audioFan" preload="auto">
+  <source src="fan.mp3" type="audio/mpeg">
+  <source src="fan.wav" type="audio/wav">
+</audio>
+<audio id="audioAction" preload="auto">
+  <source src="action.mp3" type="audio/mpeg">
+  <source src="action.wav" type="audio/wav">
+</audio>
+<audio id="audioGlass" preload="auto">
+  <source src="glass.mp3" type="audio/mpeg">
+  <source src="glass.wav" type="audio/wav">
+</audio>
+<audio id="audioDanbal" preload="auto">
+  <source src="danbal.mp3" type="audio/mpeg">
+  <source src="danbal.wav" type="audio/wav">
+</audio>
+<audio id="audioYou" preload="auto">
+  <source src="you.mp3" type="audio/mpeg">
+  <source src="you.wav" type="audio/wav">
+</audio>
+<audio id="audioUngsung" preload="auto">
+  <source src="ungsung.mp3" type="audio/mpeg">
+  <source src="ungsung.wav" type="audio/wav">
+</audio>
+<audio id="audioChong" preload="auto">
+  <source src="chong.mp3" type="audio/mpeg">
+  <source src="chong.wav" type="audio/wav">
+</audio>
+<audio id="audioBijang" preload="auto">
+  <source src="bijang.mp3" type="audio/mpeg">
+  <source src="bijang.wav" type="audio/wav">
+</audio>
+<audio id="audioCogol" preload="auto">
+  <source src="cogol.mp3" type="audio/mpeg">
+  <source src="cogol.wav" type="audio/wav">
+</audio>
+<audio id="audioHwan" preload="auto">
+  <source src="hwan.mp3" type="audio/mpeg">
+  <source src="hwan.wav" type="audio/wav">
+</audio>
+<audio id="audioFang" preload="auto">
+  <source src="fang.mp3" type="audio/mpeg">
+  <source src="fang.wav" type="audio/wav">
+</audio>
+
+<script>
+/* ===================== 오디오 엔진 ===================== */
+let audioCtx, analyser, masterGain;
+
+function initAudio(){
+  if (!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = document.getElementById('volumeSlider').value/100;
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 128;
+    masterGain.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    drawWave();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+/* 기본 톤 */
+function tone(freq, dur, type='sine', delay=0, peak=0.3, attack=0.01){
+  const t0 = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(peak, t0+attack);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+dur+0.05);
+}
+
+/* 주파수가 슬라이드 되는 톤 */
+function sweep(fStart, fEnd, dur, type='sine', delay=0, peak=0.3){
+  const t0 = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(fStart, t0);
+  osc.frequency.exponentialRampToValueAtTime(fEnd, t0+dur);
+  gain.gain.setValueAtTime(peak, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+dur+0.05);
+}
+
+/* 화이트노이즈 버퍼 */
+function noiseBuffer(dur){
+  const len = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<len;i++) d[i] = Math.random()*2-1;
+  return buf;
+}
+
+/* 필터링된 노이즈 */
+function noise(dur, filterFreq=null, filterType='lowpass', delay=0, peak=0.3, Q=1){
+  const t0 = audioCtx.currentTime + delay;
+  const src = audioCtx.createBufferSource();
+  src.buffer = noiseBuffer(dur);
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(peak, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  if (filterFreq){
+    const f = audioCtx.createBiquadFilter();
+    f.type = filterType; f.frequency.value = filterFreq; f.Q.value = Q;
+    src.connect(f); f.connect(gain);
+  } else {
+    src.connect(gain);
+  }
+  gain.connect(masterGain);
+  src.start(t0); src.stop(t0+dur+0.05);
+}
+
+/* 필터 주파수가 슬라이드되는 노이즈 (바람, 휙) */
+function noiseSweep(dur, fStart, fEnd, filterType='bandpass', delay=0, peak=0.3, Q=1){
+  const t0 = audioCtx.currentTime + delay;
+  const src = audioCtx.createBufferSource();
+  src.buffer = noiseBuffer(dur);
+  const f = audioCtx.createBiquadFilter();
+  f.type = filterType; f.Q.value = Q;
+  f.frequency.setValueAtTime(fStart, t0);
+  f.frequency.exponentialRampToValueAtTime(fEnd, t0+dur);
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(peak, t0+dur*0.2);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  src.connect(f); f.connect(gain); gain.connect(masterGain);
+  src.start(t0); src.stop(t0+dur+0.05);
+}
+
+/* ===================== 구연동화 효과음 ===================== */
+function sfxRain(){
+  noise(2.2, 2400, 'lowpass', 0, 0.18, 0.7);
+  noise(2.0, 5000, 'highpass', 0.05, 0.07, 0.6);
+}
+function sfxWind(){
+  noiseSweep(1.4, 300, 1300, 'lowpass', 0, 0.22, 0.8);
+  noiseSweep(1.6, 1300, 350, 'lowpass', 1.0, 0.18, 0.8);
+}
+function sfxThunder(){
+  noise(1.4, 130, 'lowpass', 0, 0.4, 1);
+  noise(0.8, 90, 'lowpass', 0.12, 0.45, 1);
+  tone(50, 1.2, 'sine', 0, 0.3, 0.05);
+}
+function sfxBird(){
+  sweep(2200, 3200, 0.12, 'sine', 0, 0.22);
+  sweep(2400, 3000, 0.10, 'sine', 0.18, 0.20);
+  sweep(2800, 3500, 0.13, 'sine', 0.34, 0.22);
+}
+function sfxDog(){
+  sweep(460, 240, 0.16, 'sawtooth', 0, 0.28);
+  sweep(460, 240, 0.16, 'sawtooth', 0.26, 0.28);
+}
+function sfxCat(){
+  const t0 = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type='triangle';
+  osc.frequency.setValueAtTime(500, t0);
+  osc.frequency.linearRampToValueAtTime(850, t0+0.2);
+  osc.frequency.linearRampToValueAtTime(450, t0+0.6);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(0.3, t0+0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+0.65);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+0.7);
+}
+function sfxFrog(){
+  for(let i=0;i<3;i++){
+    tone(180, 0.08, 'sawtooth', i*0.18, 0.22, 0.005);
+    tone(140, 0.08, 'sawtooth', i*0.18+0.04, 0.18, 0.005);
+  }
+}
+function sfxLion(){
+  noiseSweep(0.8, 100, 400, 'lowpass', 0, 0.3, 1);
+  tone(80, 0.9, 'sawtooth', 0, 0.25, 0.05);
+}
+function sfxDoor(){
+  const t0 = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type='sawtooth';
+  osc.frequency.setValueAtTime(180, t0);
+  osc.frequency.linearRampToValueAtTime(450, t0+0.6);
+  osc.frequency.linearRampToValueAtTime(220, t0+1.1);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(0.16, t0+0.1);
+  gain.gain.linearRampToValueAtTime(0.09, t0+0.6);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+1.2);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+1.2);
+  noise(1.2, 800, 'bandpass', 0, 0.06, 3);
+}
+function sfxFootsteps(){
+  for(let i=0;i<4;i++){
+    noise(0.15, 150, 'lowpass', i*0.35, 0.3, 1);
+  }
+}
+function sfxKnock(){
+  noise(0.1, 300, 'lowpass', 0, 0.4, 2);
+  noise(0.1, 300, 'lowpass', 0.25, 0.4, 2);
+}
+function sfxClap(){
+  for(let i=0;i<3;i++){
+    noise(0.08, 2000, 'bandpass', i*0.12, 0.32, 1.5);
+  }
+}
+function sfxSurprise(){
+  sweep(200, 1200, 0.25, 'square', 0, 0.22);
+}
+function sfxLaugh(){
+  for(let i=0;i<4;i++){
+    tone(280+i*10, 0.15, 'triangle', i*0.18, 0.24, 0.02);
+  }
+}
+function sfxHeartbeat(){
+  tone(60, 0.15, 'sine', 0, 0.4, 0.01);
+  tone(50, 0.15, 'sine', 0.2, 0.3, 0.01);
+  tone(60, 0.15, 'sine', 0.8, 0.4, 0.01);
+  tone(50, 0.15, 'sine', 1.0, 0.3, 0.01);
+}
+function sfxMagic(){
+  const notes=[523,659,784,1046,1318];
+  notes.forEach((f,i)=> tone(f, 0.4, 'sine', i*0.08, 0.2, 0.01));
+}
+
+/* ===================== 대본 전용 효과음 ===================== */
+function sfxMurmur(){
+  for(let i=0;i<10;i++){
+    const f = 150 + Math.random()*250;
+    tone(f, 0.25+Math.random()*0.2, 'triangle', Math.random()*1.0, 0.06, 0.02);
+  }
+  noise(1.2, 800, 'bandpass', 0, 0.05, 0.5);
+}
+function sfxWhistle(){
+  sweep(800, 1800, 0.18, 'sine', 0, 0.3);
+  tone(1800, 0.15, 'sine', 0.18, 0.25, 0.005);
+}
+function sfxSnore(){
+  sweep(120, 220, 0.4, 'sawtooth', 0, 0.2);
+  sweep(200, 90, 0.5, 'sawtooth', 0.45, 0.18);
+}
+function sfxEffort(){
+  sweep(180, 320, 0.18, 'sawtooth', 0, 0.28);
+  sweep(320, 150, 0.25, 'sawtooth', 0.18, 0.22);
+}
+function sfxFanfare(){
+  const notes=[523,523,523,659,784,1046];
+  const durs=[0.15,0.15,0.15,0.2,0.2,0.6];
+  let t=0;
+  notes.forEach((f,i)=>{ tone(f, durs[i], 'sawtooth', t, 0.22, 0.01); t += durs[i]*0.8; });
+}
+
+/* ===================== 수업시간 효과음 ===================== */
+function sfxAttention(){
+  tone(880, 0.5, 'sine', 0, 0.3, 0.01);
+  tone(880, 0.5, 'sine', 0.55, 0.3, 0.01);
+}
+function sfxStart(){
+  tone(660, 0.18, 'sine', 0, 0.3, 0.01);
+}
+function sfxEnd(){
+  tone(440, 0.5, 'sine', 0, 0.3, 0.01);
+}
+function sfxQuiet(){
+  sweep(500, 120, 1.0, 'sine', 0, 0.14);
+}
+function sfxCorrect(){
+  tone(784, 0.15, 'triangle', 0, 0.3, 0.01);
+  tone(1046, 0.35, 'triangle', 0.13, 0.3, 0.01);
+}
+function sfxWrong(){
+  tone(300, 0.25, 'square', 0, 0.25, 0.01);
+  tone(220, 0.35, 'square', 0.2, 0.25, 0.01);
+}
+function sfxPraise(){
+  const notes=[523,659,784,1046];
+  notes.forEach((f,i)=> tone(f, 0.35, 'triangle', i*0.09, 0.25, 0.01));
+}
+function sfxCheer(){
+  for(let i=0;i<8;i++){
+    noise(0.1, 2000+Math.random()*1000, 'bandpass', i*0.07, 0.3, 1.5);
+  }
+}
+function sfxTick(){
+  tone(1200, 0.06, 'square', 0, 0.2, 0.001);
+}
+function sfxLineUp(){
+  const notes=[523,587,659];
+  notes.forEach((f,i)=> tone(f, 0.25, 'triangle', i*0.18, 0.25, 0.01));
+}
+function sfxCleanup(){
+  const notes=[784,659,523,440,392];
+  notes.forEach((f,i)=> tone(f, 0.3, 'triangle', i*0.13, 0.2, 0.01));
+}
+function sfxTransition(){
+  noiseSweep(0.5, 300, 3000, 'bandpass', 0, 0.25, 1.5);
+}
+
+/* 업로드한 음원 파일 재생 (자전거, 선풍기 등) */
+function playUploadedAudio(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.volume = document.getElementById('volumeSlider').value/100;
+  el.currentTime = 0;
+  el.play().catch(()=>{ /* 파일이 아직 없으면 무시 */ });
+}
+function sfxBike(){ playUploadedAudio('audioBike'); }
+function sfxFan(){ playUploadedAudio('audioFan'); }
+function sfxAction(){ playUploadedAudio('audioAction'); }
+function sfxGlass(){ playUploadedAudio('audioGlass'); }
+function sfxDanbal(){ playUploadedAudio('audioDanbal'); }
+function sfxYou(){ playUploadedAudio('audioYou'); }
+function sfxUngsung(){ playUploadedAudio('audioUngsung'); }
+function sfxChong(){ playUploadedAudio('audioChong'); }
+function sfxBijang(){ playUploadedAudio('audioBijang'); }
+function sfxCogol(){ playUploadedAudio('audioCogol'); }
+function sfxHwan(){ playUploadedAudio('audioHwan'); }
+function sfxFang(){ playUploadedAudio('audioFang'); }
+
+/* ===================== 버튼 데이터 ===================== */
+const palette = ['#FFD9A0','#D4C5F9','#A8D8EA','#C9E4A8','#FFB6B9','#FFE699','#F7B7A3','#B8E0D2'];
+
+const classSounds = [
+  {emoji:'🚲', label:'자전거',   fn:'sfxBike'},
+  {emoji:'🌀', label:'선풍기',   fn:'sfxFan'},
+  {emoji:'🏃', label:'동작',     fn:'sfxAction'},
+  {emoji:'👓', label:'안경',     fn:'sfxGlass'},
+  {emoji:'✂️', label:'단발',     fn:'sfxDanbal'},
+  {emoji:'😊', label:'온유',     fn:'sfxYou'},
+];
+
+function wireSfx(el, fnName, label){
+  const press = (e)=>{
+    e.preventDefault();
+    initAudio();
+    el.classList.add('pressed');
+    const fn = window[fnName];
+    if (fn) fn();
+    waveLabel.textContent = label;
+  };
+  el.addEventListener('pointerdown', press);
+  el.addEventListener('pointerup', ()=> el.classList.remove('pressed'));
+  el.addEventListener('pointerleave', ()=> el.classList.remove('pressed'));
+  el.addEventListener('pointercancel', ()=> el.classList.remove('pressed'));
+}
+
+function buildGrid(containerId, list){
+  const grid = document.getElementById(containerId);
+  list.forEach((item, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'sound-btn';
+    btn.style.setProperty('--btn-color', palette[i % palette.length]);
+    btn.innerHTML = `<span class="emoji">${item.emoji}</span><span class="label">${item.label}</span>`;
+    grid.appendChild(btn);
+    wireSfx(btn, item.fn, item.label);
+  });
+}
+
+buildGrid('classGrid', classSounds);
+
+document.querySelectorAll('.inline-sfx').forEach(btn=>{
+  wireSfx(btn, btn.dataset.sfx, btn.dataset.label);
+});
+
+/* ===================== 탭 전환 ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.page).classList.add('active');
+  });
+});
+
+/* ===================== 볼륨 ===================== */
+document.getElementById('volumeSlider').addEventListener('input', (e)=>{
+  const v = e.target.value/100;
+  if (masterGain) masterGain.gain.value = v;
+  ['audioBike','audioFan','audioAction','audioGlass','audioDanbal','audioYou',
+   'audioUngsung','audioChong','audioBijang','audioCogol','audioHwan','audioFang'
+  ].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.volume = v;
+  });
+});
+
+/* ===================== 전체화면 ===================== */
+document.getElementById('fsBtn').addEventListener('click', ()=>{
+  try{
+    if (!document.fullscreenElement){
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }catch(err){ /* 일부 환경에서는 지원되지 않음 */ }
+});
+
+/* ===================== 사운드 웨이브 시각화 ===================== */
+const waveLabel = document.getElementById('waveLabel');
+
+function drawWave(){
+  const canvas = document.getElementById('waveCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize(){
+    canvas.width = canvas.clientWidth * (window.devicePixelRatio||1);
+    canvas.height = canvas.clientHeight * (window.devicePixelRatio||1);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const bufferLength = analyser.frequencyBinCount;
+  const data = new Uint8Array(bufferLength);
+  const barCount = 32;
+  const step = Math.max(1, Math.floor(bufferLength / barCount));
+
+  function roundRect(x,y,w,h,r){
+    r = Math.max(0, Math.min(r, w/2, h/2));
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function draw(){
+    requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(data);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const barWidth = canvas.width/barCount * 0.6;
+    const gap = canvas.width/barCount * 0.4;
+    for(let i=0;i<barCount;i++){
+      const v = data[i*step];
+      let h;
+      if (v < 4){
+        h = (Math.sin(Date.now()/350 + i*0.5)*0.5+0.5) * canvas.height*0.18 + canvas.height*0.04;
+      } else {
+        h = (v/255) * canvas.height * 0.9 + 2;
+      }
+      const x = i*(barWidth+gap);
+      const y = canvas.height - h;
+      const hue = 255 - (i/barCount)*100;
+      ctx.fillStyle = `hsl(${hue}, 50%, 65%)`;
+      roundRect(x, y, barWidth, h, barWidth/2);
+    }
+  }
+  draw();
+}
+</script>
+</body>
+</html>
